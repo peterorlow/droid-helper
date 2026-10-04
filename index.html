@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Droid Tycoon Rebirth Planner</title>
+<style>
+:root{--bg:#161a22;--panel:#1f2430;--line:#323a4b;--tx:#e9e2cf;--mut:#9aa3b5;--ok:#6fcf97;--need:#f2b24c;--sell:#ef6f5e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Verdana,Trebuchet MS,sans-serif;padding:16px;max-width:1100px;margin:auto}
+h1{font-size:1.5rem;margin:.2em 0}h2{font-size:1.1rem;margin:1.6em 0 .6em}h3{font-size:.95rem;margin:1.2em 0 .5em}
+p,small{color:var(--mut)}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--panel);padding:14px;border-radius:10px}
+label{display:flex;flex-direction:column;font-size:.8rem;color:var(--mut);gap:4px}
+select,input,button{background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit}
+input[type=number]{width:90px}button{cursor:pointer}button:hover,select:hover{border-color:var(--need)}
+:focus-visible{outline:2px solid var(--need);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.card{background:var(--panel);border-left:5px solid var(--need);padding:8px 10px;border-radius:6px;display:flex;flex-direction:column}
+.card.ok{border-color:var(--ok)}.card small{font-size:.78rem}
+.chip{background:var(--panel);border:1px solid var(--sell);color:var(--tx);padding:6px 10px;border-radius:20px}
+.chip:hover{background:var(--sell);color:#161a22}
+.coll{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.coll label{background:var(--panel);padding:6px 8px;border-radius:6px;border-left:5px solid transparent;color:var(--tx)}
+.coll label.n{border-color:var(--need)}
+.sell{display:flex;flex-wrap:wrap;gap:8px}
+
+:root{--cC:#c4cad6;--cR:#4da3ff;--cE:#b87cff;--cL:#ffb02e;--cM:#ff4d6d}
+.rC,.coll label.rC,.chip.rC{color:var(--cC)}.rR,.coll label.rR,.chip.rR{color:var(--cR)}.rE,.coll label.rE,.chip.rE{color:var(--cE)}.rL,.coll label.rL,.chip.rL{color:var(--cL)}.rM,.coll label.rM,.chip.rM{color:var(--cM)}
+.legend{margin:10px 0 0;display:flex;gap:14px;flex-wrap:wrap;font-weight:bold;font-size:.9rem}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--mut);font-weight:normal;font-size:.8rem}
+.pill{display:inline-block;border:1px solid currentColor;border-radius:14px;padding:2px 9px;margin:2px;font-size:.85rem;white-space:nowrap}.pill small{color:var(--tx)}.pill.have{background:rgba(111,207,151,.18)}
+tr.done{opacity:.4}tr.out{opacity:.55}tr.next td:first-child{border-left:4px solid var(--need)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 8px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:6px 6px 0 0;background:none;color:var(--mut);padding:10px 14px}
+.tabs button.on{color:var(--tx);background:var(--panel);border-bottom-color:var(--need)}
+.badge{background:var(--need);color:#161a22;border-radius:10px;padding:0 7px;margin-left:6px;font-size:.75rem}.badge:empty{display:none}
+section[hidden]{display:none}
+footer{margin-top:2em;font-size:.75rem;color:var(--mut)}
+</style></head><body>
+<h1>Droid Tycoon Rebirth Planner</h1>
+<p>Pick your path and rebirth, then tell it which droids you own. It shows what to keep, what to craft, and what is safe to sell.</p>
+<div class="bar">
+<label>Path (super-rebirth cycle)<select id="c"></select></label>
+<label>Current rebirth<span><input id="r" type="number" min="0" max="39"> <button id="plus" title="Rebirth done">+1</button></span></label>
+<label>Plan to end at<input id="e" type="number" min="1" max="40"></label>
+<button id="clear">Clear collection</button>
+</div>
+<div class="legend"><span class="rC">Common</span><span class="rR">Rare</span><span class="rE">Epic</span><span class="rL">Legendary</span><span class="rM">Mythic</span></div>
+
+<div class="tabs" id="tabs">
+<button data-t="need">Droids you need <b class="badge" id="b1"></b></button>
+<button data-t="rb">Every rebirth on this path</button>
+<button data-t="sell">Safe to sell <b class="badge" id="b2"></b></button>
+<button data-t="coll">My collection</button>
+</div>
+<section id="p-need"><p><small id="cnt"></small></p><div id="need"></div></section>
+<section id="p-rb"><p><small>Green ticked droids are ones you already have at the needed tier. Faded rows are done or past your end rebirth.</small></p><div class="wrap" id="rb"></div></section>
+<section id="p-sell"><p><small>Not needed from your current rebirth to your end rebirth. Click one once you have sold it.</small></p><div id="sell"></div></section>
+<section id="p-coll"><p><small>Set the best tier you own of each droid.</small></p><div id="coll"></div></section>
+
+<footer>Fan-made tool, not affiliated with Epic Games, Lucasfilm or the Droid Tycoon creators. Requirements can change with game updates and some Path 1 rebirth 35-40 entries differ between sources, so check the in-game rebirth console. Edit <code>data.js</code> to fix any row.</footer>
+<script src="data.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let S={c:1,r:0,e:40,own:{},tab:'need'};
+try{Object.assign(S,JSON.parse(localStorage.getItem('dtplan')||'{}'))}catch(x){}
+const RO=['M','L','E','R','C'],RN={M:'Mythic',L:'Legendary',E:'Epic',R:'Rare',C:'Common'};
+const grp=(a,key,fn,cls)=>RO.map(k=>{const g=a.filter(x=>(RAR[key(x)]||'C')==k);return g.length?`<h3 class="r${k}">${RN[k]} <small>(${g.length})</small></h3><div class="${cls}">${g.map(fn).join('')}</div>`:''}).join('');
+const nm=x=>x.slice(0,x.lastIndexOf(':'));
+const rows=c=>D[c].map(r=>r.split(',').map(x=>[nm(x),+x.slice(x.lastIndexOf(':')+1)]));
+const names=[...new Set(Object.values(D).flat().flatMap(r=>r.split(',').map(nm)))].sort((a,b)=>a.localeCompare(b,'en',{numeric:true}));
+$('c').innerHTML=[1,2,3,4,5].map(i=>`<option value="${i}">Path ${i}</option>`).join('');
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
+  ['need','rb','sell','coll'].forEach(k=>$('p-'+k).hidden=k!=S.tab);
+  S.r=Math.max(0,Math.min(39,S.r|0));S.e=Math.max(S.r+1,Math.min(40,S.e|0));
+  $('c').value=S.c;$('r').value=S.r;$('e').value=S.e;
+  const R=rows(S.c),need={};
+  for(let n=S.r+1;n<=S.e;n++)R[n-1].forEach(([d,t])=>{const o=need[d]||(need[d]={d,t:0,a:n,z:n});o.t=Math.max(o.t,t);o.z=n});
+  const list=Object.values(need).sort((a,b)=>a.a-b.a),miss=list.filter(o=>(S.own[o.d]||0)<o.t).length;
+  $('cnt').textContent=`${miss} still to get or upgrade, ${list.length-miss} covered`;$('b1').textContent=miss;
+  $('need').innerHTML=grp(list,o=>o.d,o=>{const h=S.own[o.d]||0;return `<div class="card ${h>=o.t?'ok':''}"><b class="r${RAR[o.d]}">${o.d}</b><span>${T[o.t]} or better</span><small>Needed rebirth ${o.a}${o.z>o.a?' to '+o.z:''} - you have ${h?T[h]:'none'}</small>${h>=o.t?`<small>Keep until rebirth ${o.z}</small>`:''}</div>`},'grid');
+  const ok=(d,t)=>(S.own[d]||0)>=t;
+  $('rb').innerHTML='<table><tr><th>Rebirth</th><th>Credits</th><th>Droids needed (that tier or better)</th></tr>'+R.map((row,i)=>{const n=i+1;return `<tr class="${n<=S.r?'done':n>S.e?'out':n==S.r+1?'next':''}"><td>${n}</td><td>${CR[i]}</td><td>${row.map(([d,t])=>`<span class="pill r${RAR[d]}${ok(d,t)?' have':''}">${ok(d,t)?'&#10003; ':''}${d} <small>${T[t]}</small></span>`).join('')}</td></tr>`}).join('')+'</table>';
+  const sell=names.filter(d=>S.own[d]&&!need[d]);
+  $('b2').textContent=sell.length;
+  $('sell').innerHTML=grp(sell,d=>d,d=>`<button class="chip r${RAR[d]}" data-d="${d}" title="Remove from collection">${d} (${T[S.own[d]]})</button>`,'sell')||'<p>Nothing to sell right now.</p>';
+  $('coll').innerHTML=grp(names,d=>d,d=>`<label class="r${RAR[d]}${need[d]?' n':''}">${d}<select data-d="${d}">${T.map((t,i)=>`<option value="${i}"${(S.own[d]||0)==i?' selected':''}>${t||'Not owned'}</option>`).join('')}</select></label>`,'grid coll');
+  try{localStorage.setItem('dtplan',JSON.stringify(S))}catch(x){}
+}
+$('c').onchange=e=>{S.c=+e.target.value;render()};
+$('r').onchange=e=>{S.r=+e.target.value;render()};
+$('e').onchange=e=>{S.e=+e.target.value;render()};
+$('tabs').onclick=e=>{if(e.target.dataset.t){S.tab=e.target.dataset.t;render()}};
+$('plus').onclick=()=>{S.r++;render()};
+$('clear').onclick=()=>{if(confirm('Clear your whole collection?')){S.own={};render()}};
+$('coll').onchange=e=>{S.own[e.target.dataset.d]=+e.target.value;render()};
+$('sell').onclick=e=>{const d=e.target.dataset.d;if(d){delete S.own[d];render()}};
+render();
+</script></body></html>
